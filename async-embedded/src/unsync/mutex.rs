@@ -8,7 +8,7 @@ use core::{
     task::{Context, Poll},
 };
 
-use super::waker_set::WakerSet;
+use super::waker_set::{WakerKey, WakerSet};
 
 /// A mutual exclusion primitive for protecting shared data
 pub struct Mutex<T> {
@@ -33,7 +33,7 @@ impl<T> Mutex<T> {
     pub async fn lock(&self) -> MutexGuard<'_, T> {
         struct Lock<'a, T> {
             mutex: &'a Mutex<T>,
-            opt_key: Option<usize>,
+            opt_key: Option<WakerKey>,
         }
 
         impl<'a, T> Future for Lock<'a, T> {
@@ -61,7 +61,7 @@ impl<T> Mutex<T> {
         impl<T> Drop for Lock<'_, T> {
             fn drop(&mut self) {
                 // If the current task is still in the set, that means it is being cancelled now.
-                if let Some(key) = self.opt_key {
+                if let Some(key) = self.opt_key.take() {
                     self.mutex.wakers.cancel(key);
                 }
             }
@@ -92,7 +92,9 @@ impl<T> Drop for MutexGuard<'_, T> {
     fn drop(&mut self) {
         self.0.locked.set(false);
         self.0.wakers.notify_any();
-        unsafe { crate::signal_event_ready(); }
+        unsafe {
+            crate::signal_event_ready();
+        }
     }
 }
 

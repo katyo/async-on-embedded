@@ -2,6 +2,7 @@
 
 mod channel;
 mod mutex;
+mod slab;
 mod waker_set;
 
 pub use channel::Channel;

@@ -17,7 +17,7 @@ version = "0.0.0-alpha.0"
 dependencies = [
  "cortex-m",
  "generic-array 0.13.2",
- "heapless 0.5.3",
+ "heapless",
  "pin-utils",
  "riscv",
  "typenum",
@@ -135,16 +135,6 @@ dependencies = [
 
 [[package]]
 name = "heapless"
-version = "0.5.3"
-source = "git+https://github.com/japaric/heapless?branch=slab#10e88349aef0957062f46700ccb2752485d3aa50"
-dependencies = [
- "as-slice",
- "generic-array 0.13.2",
- "hash32",
-]
-
-[[package]]
-name = "heapless"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73a8a2391a3bc70b31f60e7a90daa5755a360559c0b6b9c5cfc0fee482362dc0"
@@ -164,7 +154,7 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-semihosting",
- "heapless 0.5.5",
+ "heapless",
  "nrf52840-pac",
  "panic-semihosting",
  "panic-udf",

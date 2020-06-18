@@ -5,9 +5,10 @@ use core::{
     task::{Context, Waker},
 };
 
-// TODO replace with `heapless::Slab` but then we need to pick a fixed capacity
-// (equal to the maximum number of in-flight tasks) for the `Slab`
-use heapless::{i, Slab};
+use super::slab::{i, Slab};
+use crate::NTASKS;
+
+pub type WakerKey = usize;
 
 // NOTE this should only ever be used in "Thread mode"
 pub struct WakerSet {
@@ -21,7 +22,7 @@ impl WakerSet {
         }
     }
 
-    pub fn cancel(&self, key: usize) -> bool {
+    pub fn cancel(&self, key: WakerKey) -> bool {
         // NOTE(unsafe) single-threaded context; OK as long as no references are returned
         unsafe { (*self.inner.get()).cancel(key) }
     }
@@ -36,12 +37,12 @@ impl WakerSet {
         unsafe { (*self.inner.get()).notify_one() }
     }
 
-    pub fn insert(&self, cx: &Context<'_>) -> usize {
+    pub fn insert(&self, cx: &Context<'_>) -> WakerKey {
         // NOTE(unsafe) single-threaded context; OK as long as no references are returned
         unsafe { (*self.inner.get()).insert(cx) }
     }
 
-    pub fn remove(&self, key: usize) {
+    pub fn remove(&self, key: WakerKey) {
         // NOTE(unsafe) single-threaded context; OK as long as no references are returned
         unsafe { (*self.inner.get()).remove(key) }
     }
@@ -59,7 +60,7 @@ enum Notify {
 
 struct Inner {
     // NOTE the number of entries is capped at `NTASKS`
-    entries: Slab<Option<Waker>, crate::NTASKS>,
+    entries: Slab<Option<Waker>, NTASKS>,
     notifiable: usize,
 }
 
@@ -74,7 +75,7 @@ impl Inner {
     /// Removes the waker of a cancelled operation.
     ///
     /// Returns `true` if another blocked operation from the set was notified.
-    fn cancel(&mut self, key: usize) -> bool {
+    fn cancel(&mut self, key: WakerKey) -> bool {
         match self.entries.remove(key) {
             Some(_) => self.notifiable -= 1,
             None => {
@@ -133,7 +134,7 @@ impl Inner {
         notified
     }
 
-    fn insert(&mut self, cx: &Context<'_>) -> usize {
+    fn insert(&mut self, cx: &Context<'_>) -> WakerKey {
         let w = cx.waker().clone();
         let key = self.entries.insert(Some(w)).expect("OOM");
         self.notifiable += 1;
@@ -141,7 +142,7 @@ impl Inner {
     }
 
     /// Removes the waker of an operation.
-    fn remove(&mut self, key: usize) {
+    fn remove(&mut self, key: WakerKey) {
         if self.entries.remove(key).is_some() {
             self.notifiable -= 1;
         }

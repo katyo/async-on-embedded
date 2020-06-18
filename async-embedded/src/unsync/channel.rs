@@ -14,7 +14,7 @@ use core::{
 
 use generic_array::{typenum::Unsigned, GenericArray};
 
-use super::waker_set::WakerSet;
+use super::waker_set::{WakerKey, WakerSet};
 
 /// MPMC channel
 // FIXME this needs a destructor
@@ -47,7 +47,7 @@ impl<T> Channel<T> {
         struct Send<'a, T> {
             channel: &'a Channel<T>,
             msg: Option<T>,
-            opt_key: Option<usize>,
+            opt_key: Option<WakerKey>,
         }
 
         // XXX(japaric) why is this required here but not in `Recv`? is it due
@@ -90,7 +90,7 @@ impl<T> Channel<T> {
     pub async fn recv(&self) -> T {
         struct Recv<'a, T> {
             channel: &'a Channel<T>,
-            opt_key: Option<usize>,
+            opt_key: Option<WakerKey>,
         }
 
         impl<T> Future for Recv<'_, T> {
