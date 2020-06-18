@@ -13,12 +13,10 @@ pub mod unsync;
 #[cfg(target_arch = "arm")]
 use cortex_m::asm;
 
+#[cfg(target_arch = "arm")]
+pub use asm::udf as abort;
 
 #[cfg(target_arch = "arm")]
-pub use cortex_m_udf::udf as abort;
-
-#[cfg(target_arch = "arm")]
-#[inline]
 /// Prevent next `wait_for_interrupt` from sleeping, wake up other harts if needed.
 /// This particular implementation does nothing, since `wait_for_interrupt` never sleeps
 pub(crate) unsafe fn signal_event_ready() {

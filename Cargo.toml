@@ -1,10 +1,12 @@
 [workspace]
 members = [
   "async-embedded",
-  "cortex-m-udf",
   "nrf52",
   "panic-udf",
 ]
+
+[patch.crates-io]
+cortex-m = { git = "https://github.com/rust-embedded/cortex-m" }
 
 [profile.dev]
 codegen-units = 1
